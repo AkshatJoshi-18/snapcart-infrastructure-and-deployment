@@ -1,4 +1,4 @@
-name: "Terraform CI: Auto-PR & Validation"
+name: "Terraform CI: Validation Only"
 
 # Trigger: Runs on every push to feature branches (ignores main)
 on:
@@ -6,15 +6,15 @@ on:
     branches-ignore:
       - main
 
-# Permissions: Required for OIDC (AWS) and creating PRs (GitHub)
+# Permissions: OIDC (AWS) is strictly required. PRs only need read access now.
 permissions:
   id-token: write       # Allow connecting to AWS without keys
   contents: read        # Allow reading the repo code
-  pull-requests: write  # Allow the bot to open/comment on PRs
+  pull-requests: read   # Downgraded from 'write' since we removed the Auto-PR job
 
 env:
-  AWS_REGION: "ap-south-1"  # Set your AWS region
-  TF_VERSION: "1.14.3"   # Pin your version for consistency
+  AWS_REGION: "ap-south-1"
+  TF_VERSION: "1.14.3"
 
 jobs:
   # ------------------------------------------------------------------
@@ -34,14 +34,12 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Check Formatting (fmt)
-        # Fails if code isn't formatted with 'terraform fmt'
         run: terraform fmt -check -recursive
 
       - name: Security Scan (tfsec)
-        # Scans for vulnerabilities (e.g., open S3 buckets, 0.0.0.0/0 rules)
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
-          soft_fail: true # Set to 'false' to block PRs on security issues
+          soft_fail: true
 
   # ------------------------------------------------------------------
   # JOB 2: VALIDATE & PLAN (The Logic Check)
@@ -49,7 +47,7 @@ jobs:
   # ------------------------------------------------------------------
   verify-logic:
     name: "Verify Logic"
-    needs: static-checks # Wait for formatting/security to pass
+    needs: static-checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -67,56 +65,18 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      # --- STAGE VALIDATION (The Target) ---
+      # --- STAGE VALIDATION ---
       - name: Plan Stage
-        working-directory: ./terraform/environments/stage  # Adjust path as needed
+        working-directory: ./terraform/environments/stage
         run: |
           terraform init
           terraform validate
           # -lock=false speeds up CI and prevents blocking your team
           terraform plan -input=false -lock=false
 
-      # --- PROD VALIDATION (The Safety Check) ---
-      # Crucial: Ensures shared module changes don't break Prod syntax
+      # --- PROD VALIDATION (Syntax Check Only) ---
       - name: Validate Prod (Syntax Only)
         working-directory: ./terraform/environments/prod
         run: |
           terraform init -backend=false
           terraform validate
-
-  # ------------------------------------------------------------------
-  # JOB 3: AUTO-PR CREATION
-  # Only runs if the code is perfect (Green Checks ✅)
-  # ------------------------------------------------------------------
-  create-pr:
-    name: "Open Pull Request"
-    needs: verify-logic
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Create or Update PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Built-in secret
-        run: |
-          # 1. Check if PR exists
-          EXISTING_PR=$(gh pr list --head ${{ github.ref_name }} --json url --jq '.[0].url')
-
-          if [ -n "$EXISTING_PR" ]; then
-            echo "PR already exists: $EXISTING_PR. Skipping creation."
-            exit 0
-          fi
-
-          # 2. Create PR if none exists
-          gh pr create \
-            --base main \
-            --head ${{ github.ref_name }} \
-            --draft \
-            --title "feat: Changes to ${{ github.ref_name }}" \
-            --body "### 🤖 Automated Terraform PR
-            
-            **Status:** ✅ Terraform Plan Successful.
-            **Security:** ✅ tfsec Scan Passed.
-            
-            _This is a Draft PR. Click 'Ready for Review' when you are done._"
