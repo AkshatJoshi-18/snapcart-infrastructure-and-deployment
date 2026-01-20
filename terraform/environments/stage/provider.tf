@@ -15,7 +15,7 @@ provider "aws" {
   region = "ap-south-1" # Explicit Region Specification
 
   # Safety Net: Prevent accidental deployment to wrong account
-  allowed_account_ids = ["312530021679"] 
+  allowed_account_ids = ["312530021679"]
 
   # Best Practice: Auto-tag every resource created by this provider
   default_tags {
