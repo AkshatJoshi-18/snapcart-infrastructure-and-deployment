@@ -8,7 +8,7 @@ We follow a Trunk-Based Development model to ensure high availability and rapid 
 
 Ensure you have the following tools installed and configured:
 
-- Terraform (v1.5+)
+- Terraform (v1.14.3)
 - Ansible (v2.10+)
 - AWS CLI (Run `aws configure` before starting)
 - Git (Configured with your name and email)
