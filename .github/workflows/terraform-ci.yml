@@ -5,6 +5,10 @@ on:
   push:
     branches-ignore:
       - main
+    paths-ignore:         # <-- Add this block
+      - '**.md'           # Ignores all markdown files
+      - 'LICENSE'
+      - '.gitignore'
 
 # Permissions: OIDC (AWS) is strictly required. PRs only need read access now.
 permissions:
