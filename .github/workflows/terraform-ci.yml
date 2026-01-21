@@ -53,6 +53,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Detects if changes occurred in 'stage/' or 'prod/' folders
+      - name: Detect Changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            stage:
+              - 'stage/**'
+              - 'modules/**'
+            prod:
+              - 'prod/**'
+              - 'modules/**'
+
       # Securely Connect to AWS (No Access Keys!)
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v3
@@ -67,16 +80,20 @@ jobs:
 
       # --- STAGE VALIDATION ---
       - name: Plan Stage
+        if: steps.changes.outputs.stage == 'true'
         working-directory: ./terraform/environments/stage
         run: |
           terraform init
           terraform validate
+          terraform plan -input=false -lock=false
           # -lock=false speeds up CI and prevents blocking your team
           terraform plan -input=false -lock=false
 
       # --- PROD VALIDATION (Syntax Check Only) ---
       - name: Validate Prod (Syntax Only)
+        if: steps.changes.outputs.prod == 'true'
         working-directory: ./terraform/environments/prod
         run: |
-          terraform init -backend=false
+          terraform init
           terraform validate
+          terraform plan -input=false -lock=false
