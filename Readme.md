@@ -1,2 +1,1 @@
 snapcart-infrastructure-deployment-repo
-snapcart-infrastructure-deployment-repo
