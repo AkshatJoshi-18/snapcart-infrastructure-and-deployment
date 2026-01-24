@@ -12,8 +12,8 @@ resource "aws_security_group" "this" {
   }
 
   ingress {
-    from_port   = 443   
-    to_port     = 443   
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = var.allowed_cidr_blocks
     description = "Allow HTTPS access"
@@ -34,24 +34,24 @@ resource "aws_security_group" "this" {
 }
 
 resource "aws_instance" "this" {
-    ami = var.ami_id
-    instance_type = var.instance_type
-    subnet_id = var.subnet_id
-    vpc_security_group_ids = [aws_security_group.this.id]
-    
-    root_block_device {
-        volume_size = 30
-        volume_type = "gp3"
-        encrypted = true
-    }
+  ami                    = var.ami_id
+  instance_type          = var.instance_type
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = [aws_security_group.this.id]
 
-    lifecycle {
-        create_before_destroy = true
-    }
-    
-    tags = {
-        Name = "${var.project_name}-${var.environment}-instance"
-        Project = var.project_name
-        Environment = var.environment
-    }
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+    encrypted   = true
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-instance"
+    Project     = var.project_name
+    Environment = var.environment
+  }
 }

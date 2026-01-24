@@ -11,11 +11,11 @@ terraform {
   # REMOTE BACKEND: Essential for team collaboration and locking
   # Ensure the S3 bucket and DynamoDB table exist before running init
   backend "s3" {
-    bucket         = "tf-bucket-8630"
-    key            = "compute/ec2/terraform.tfstate"
-    region         = "ap-south-1"
+    bucket = "tf-bucket-8630"
+    key    = "compute/ec2/terraform.tfstate"
+    region = "ap-south-1"
     # dynamodb_table = "terraform-locks"
-    encrypt        = true
+    encrypt      = true
     use_lockfile = true
   }
 }

@@ -31,8 +31,8 @@ module "vpc" {
 
   # Best Practice: consistent naming strategy
   # We combine project + env to ensure unique names like "snapcart-prod-vpc"
-  project_name      = "${var.project_name}-${var.environment}" 
-  
+  project_name = "${var.project_name}-${var.environment}"
+
   vpc_cidr          = var.vpc_cidr
   subnet_cidr       = var.public_subnet_cidr
   availability_zone = var.availability_zone
@@ -50,11 +50,11 @@ module "app_server" {
   instance_type = var.instance_type
 
   # Inputs from Module Outputs (Dependency Chain)
-  vpc_id        = module.vpc.vpc_id
-  subnet_id     = module.vpc.public_subnet_id
+  vpc_id    = module.vpc.vpc_id
+  subnet_id = module.vpc.public_subnet_id
 
   # Inputs from Data Sources
-  ami_id              = data.aws_ami.ubuntu.id
+  ami_id = data.aws_ami.ubuntu.id
   # Use chomp() to remove the hidden '\n' character
   allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
 }
