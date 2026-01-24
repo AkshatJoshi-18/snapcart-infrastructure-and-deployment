@@ -55,5 +55,6 @@ module "app_server" {
 
   # Inputs from Data Sources
   ami_id              = data.aws_ami.ubuntu.id
-  allowed_cidr_blocks = ["${data.http.my_ip.response_body}/32"]
+  # Use chomp() to remove the hidden '\n' character
+  allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
 }
